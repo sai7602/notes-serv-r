@@ -39,7 +39,7 @@ export class NotesService {
       .project({
         _id: 0,
         category: '$_id',
-        isArchived: '$archived',
+        archived: '$archived',
         unArchived: '$unArchived',
       });
 
