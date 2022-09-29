@@ -33,12 +33,12 @@ let NotesService = class NotesService {
             .aggregate([
             {
                 $group: {
-                    _id: {
-                        category: '$category',
-                        isArchived: '$isArchived',
+                    _id: '$category',
+                    archived: {
+                        $sum: { $cond: ['$isArchived', 1, 0] },
                     },
-                    count: {
-                        $sum: 1,
+                    unArchived: {
+                        $sum: { $cond: ['$isArchived', 0, 1] },
                     },
                 },
             },
@@ -46,10 +46,9 @@ let NotesService = class NotesService {
         ])
             .project({
             _id: 0,
-            category: '$_id.category',
-            isArchived: '$_id.isArchived',
-            average: 1,
-            count: '$count',
+            category: '$_id',
+            isArchived: '$archived',
+            unArchived: '$unArchived',
         });
         return stats;
     }
