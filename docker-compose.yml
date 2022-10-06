@@ -1,6 +1,16 @@
 version: '3.2'
 
 services:
+  db:
+    image: postgres
+    ports:
+      - '5432:5432'
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+
   apiserver:
     build:
       dockerfile: Dockerfile
@@ -13,13 +23,3 @@ services:
       PORT: 3000
     ports:
       - '8080:3000'
-
-  db:
-    image: postgres
-    ports:
-      - '5432:5432'
-    restart: always
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: db

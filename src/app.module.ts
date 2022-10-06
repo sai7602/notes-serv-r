@@ -9,7 +9,7 @@ import { NotesModule } from './notes/notes.module';
     NotesModule,
     SequelizeModule.forRoot({
       dialect: 'postgres',
-      host: 'localhost',
+      host: 'database' || 'localhost',
       port: 5432,
       username: 'user',
       password: 'password',
