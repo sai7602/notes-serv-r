@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { SequelizeModule } from '@nestjs/sequelize';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NotesModule } from './notes/notes.module';
@@ -7,9 +7,16 @@ import { NotesModule } from './notes/notes.module';
 @Module({
   imports: [
     NotesModule,
-    MongooseModule.forRoot(
-      'mongodb+srv://admin:admin@cluster0.dbdipmb.mongodb.net/notes',
-    ),
+    SequelizeModule.forRoot({
+      dialect: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'sai',
+      password: 'postgres1',
+      database: 'db',
+      autoLoadModels: true,
+      synchronize: true,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,72 +1,74 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { CreateNoteDto } from './dto/create-note.dto';
+import { InjectModel } from '@nestjs/sequelize';
+import sequelize from 'sequelize';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { Note } from './entities/note.entity';
 
 @Injectable()
 export class NotesService {
-  constructor(
-    @InjectModel(Note.name) private readonly noteModel: Model<Note>,
-  ) {}
+  constructor(@InjectModel(Note) private readonly noteModel: typeof Note) {}
 
-  create(createNoteDto: CreateNoteDto) {
-    const note = new this.noteModel(createNoteDto);
-    return note.save();
+  async create(CreateNoteDto) {
+    return this.noteModel.create(CreateNoteDto);
   }
 
-  findAll() {
-    return this.noteModel.find().exec();
+  async findAll(): Promise<Note[]> {
+    return this.noteModel.findAll();
   }
 
-  getStats() {
-    const stats = this.noteModel
-      .aggregate([
-        {
-          $group: {
-            _id: '$category',
-            archived: {
-              $sum: { $cond: ['$isArchived', 1, 0] },
-            },
-            unArchived: {
-              $sum: { $cond: ['$isArchived', 0, 1] },
-            },
-          },
-        },
-        { $sort: { _id: 1 } },
-      ])
-      .project({
-        _id: 0,
-        category: '$_id',
-        archived: '$archived',
-        unArchived: '$unArchived',
-      });
+  async getStats() {
+    const archived = await this.noteModel.findAll({
+      attributes: [
+        'category',
+        [sequelize.fn('COUNT', sequelize.col('isArchived')), 'Archived'],
+      ],
+      where: {
+        isArchived: true,
+      },
+      group: 'category',
+    });
+    const unArchived = await this.noteModel.findAll({
+      attributes: [
+        'category',
+        [sequelize.fn('COUNT', sequelize.col('isArchived')), 'UnArchived'],
+      ],
+      where: {
+        isArchived: false,
+      },
+      group: 'category',
+    });
 
-    return stats;
+    return archived.map((stat, index) => {
+      stat.setDataValue(
+        'UnArchived',
+        unArchived[index].getDataValue('UnArchived'),
+      );
+      return stat;
+    });
   }
 
-  async findOne(id: string) {
-    const note = await this.noteModel.findOne({ _id: id }).exec();
+  async findOne(id: string): Promise<Note> {
+    const note = await this.noteModel.findOne({ where: { id } });
     if (!note) {
       throw new NotFoundException(`Note found id # ${id}`);
     }
     return note;
   }
 
-  async update(id: string, updateNoteDto: UpdateNoteDto) {
-    const existingNote = await this.noteModel
-      .findOneAndUpdate({ _id: id }, { $set: updateNoteDto }, { new: true })
-      .exec();
+  async update(id: number, updateNoteDto: UpdateNoteDto) {
+    const existingNote = await this.noteModel.update(updateNoteDto, {
+      where: { id },
+    });
+
     if (!existingNote) {
       throw new NotFoundException(`Note found id # ${id}`);
     }
     return existingNote;
   }
 
-  async remove(id: string) {
-    const note = await this.findOne(id);
+  async remove(id: number) {
+    await this.noteModel.destroy({ where: { id } });
 
-    return note.remove();
+    return `Note # ${id} successfully deleted`;
   }
 }

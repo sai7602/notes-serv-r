@@ -1,4 +1,6 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+// import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
+import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
 export enum Categories {
   Task = 'TASK',
@@ -7,16 +9,25 @@ export enum Categories {
   Quote = 'QUOTE',
 }
 
-@Schema({ timestamps: true })
-export class Note {
-  @Prop()
+@Table({ timestamps: true })
+export class Note extends Model {
+  @Column({
+    type: DataType.STRING,
+  })
   noteName: string;
-  @Prop({ enum: Categories })
+  @Column({
+    type: DataType.ENUM(...Object.values(Categories)),
+  })
   category: Categories;
-  @Prop()
+  @Column({
+    type: DataType.STRING,
+  })
   content: string;
-  @Prop()
+  @Column({
+    type: DataType.BOOLEAN,
+    defaultValue: true,
+  })
   isArchived: boolean;
 }
 
-export const NoteSchema = SchemaFactory.createForClass(Note);
+// export const NoteSchema = SchemaFactory.createForClass(Note);
